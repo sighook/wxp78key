@@ -3,7 +3,7 @@
 A tiny keylogger with ftp upload
 
 ### Usage
-* configure `keylogger.h` header
+* copy `config.def.h` to `config.h` and edit
 * compile (*with MinGW*):
 ```
 gcc.exe keylogger.c -lwsock32 -o <name.exe> -s -Os
@@ -12,9 +12,9 @@ gcc.exe keylogger.c -lwsock32 -o <name.exe> -s -Os
 * run it and ... profit **:)**
 
 ### Note
-* from **WinXP** log coming in *CP1251* encoding
+* from **WinXP** log file is coming in *CP1251* encoding
 * from **Win7-Win8** in *UTF-16LE*
 
-### Contacts 
-chinarulezzz <s.alex08@mail.ru>
+### Contacts
+chinarulezzz, <s.alex08@mail.ru>
 

