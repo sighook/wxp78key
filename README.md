@@ -1,6 +1,8 @@
 ### About
 
-A tiny keylogger with ftp upload
+A tiny keylogger with ftp upload.
+
+Tested on Win XP, Win Vista, Win 7, Win 8.
 
 ### Usage
 * copy `config.def.h` to `config.h` and edit
