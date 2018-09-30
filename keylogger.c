@@ -10,7 +10,7 @@
  *              + copy <name.exe> to host                                      *
  *              + run it and ... profit :)                                     *
  *                                                                             *
- * coded by:    chinarulezzz, s.alex08@mail.ru                                 *
+ * coded by:    chinarulezzz, <alexandr.savca89@gmail.com>                     *
  *                                                                             *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                             *

@@ -18,5 +18,5 @@ gcc.exe keylogger.c -lwsock32 -o <name.exe> -s -Os
 * from **Win7-Win8** in *UTF-16LE*
 
 ### Contacts
-chinarulezzz, <s.alex08@mail.ru>
+chinarulezzz, <alexandr.savca89@gmail.com>
 
