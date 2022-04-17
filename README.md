@@ -16,7 +16,7 @@ gcc.exe keylogger.c -lwsock32 -o <name.exe> -s -Os
 2. Linux (debian based):
 ```sh
 sudo apt install gcc-mingw-w64-x86-64
-x86_64-w64-mingw32-gcc keylogger.c -lwsock32 -o keylogger.exe -s -Os
+x86_64-w64-mingw32-gcc keylogger.c -lwsock32 -o <name.exe> -s -Os
 ```
 
 * copy <name.exe> to host
